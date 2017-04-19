@@ -7,11 +7,12 @@
 	// var morgan = require('morgan');             // log requests to the console (express4)
 	var bodyParser = require('body-parser');    // pull information from HTML POST (express4)
 	var methodOverride = require('method-override'); // simulate DELETE and PUT (express4)
+	var config = require("./config");
 	var googleMapsClient = require('@google/maps').createClient({
-		key: "AIzaSyCu06tFv4xfsQONE-FRfcie4VDrdcSyrpA",
+		key: config.apiKey,
 		Promise: require('q').Promise
 	});
-	var savedPlaceIds = ["ChIJZVVVlfLU1IkRGbZkZh5VyTw"]; // TODO: replace with database
+	var savedPlaceIds = ["ChIJZVVVlfLU1IkRGbZkZh5VyTw", "ChIJH_38MlvU1IkR8mDX2-VDmh0"]; // TODO: replace with database
 	// configuration =================
 
 	// mongoose.connect('mongodb://node:nodeuser@mongo.onmodulus.net:27017/uwO3mypu');     // connect to mongoDB database on modulus.io
