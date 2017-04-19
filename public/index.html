@@ -1,0 +1,42 @@
+<!-- index.html -->
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<html ng-app="storeCards">
+<head>
+	<!-- META -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+	<title>Store App</title>
+
+	<!-- SCROLLS -->
+	<link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+
+	<!-- SPELLS -->
+	<script src="/js/jquery-2.1.1.min.js"></script><!-- load jquery -->
+	<script src="/js/angular.min.js"></script><!-- load angular -->
+	<script type="text/javascript" src="js/materialize.min.js"></script>
+	<script src="core.js"></script>
+
+</head>
+<nav>
+	<div class="nav-wrapper blue lighten-1">
+		<a href="#!" class="brand-logo center">Is it Open?</a>
+		<a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
+		<ul class="left hide-on-med-and-down">
+			<li><a href="#!/cards">Cards View</a></li>
+			<li><a href="#!/list">List View</a></li>
+			<li><a href="#">Search</a></li>
+		</ul>
+		<ul class="side-nav" id="mobile-demo">
+			<li><a href="#!/cards">Cards View</a></li>
+			<li><a href="#!/list">List View</a></li>
+			<li><a href="#">Search</a></li>
+		</ul>
+	</div>
+</nav>
+<!-- SET THE CONTROLLER AND GET ALL TODOS -->
+<store-cards></store-cards>
+</body>
+</html>
