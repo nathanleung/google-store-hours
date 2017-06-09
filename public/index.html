@@ -2,7 +2,7 @@
 <!doctype html>
 
 <!-- ASSIGN OUR ANGULAR MODULE -->
-<html ng-app="storeCards">
+<html ng-app="storeApp">
 <head>
 	<!-- META -->
 	<meta charset="utf-8">
@@ -15,7 +15,10 @@
 
 	<!-- SPELLS -->
 	<script src="/js/jquery-2.1.1.min.js"></script><!-- load jquery -->
-	<script src="/js/angular.min.js"></script><!-- load angular -->
+	<script src="/js/angular.min.js"></script>
+	<script src="/js/angular-route.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY&libraries=places"></script>
+	<script type="text/javascript" src="js/ng-map.min.js"></script>
 	<script type="text/javascript" src="js/materialize.min.js"></script>
 	<script src="core.js"></script>
 
@@ -27,16 +30,17 @@
 		<ul class="left hide-on-med-and-down">
 			<li><a href="#!/cards">Cards View</a></li>
 			<li><a href="#!/list">List View</a></li>
-			<li><a href="#">Search</a></li>
+			<li><a href="#!/search">Search</a></li>
 		</ul>
 		<ul class="side-nav" id="mobile-demo">
 			<li><a href="#!/cards">Cards View</a></li>
 			<li><a href="#!/list">List View</a></li>
-			<li><a href="#">Search</a></li>
+			<li><a href="#!/search">Search</a></li>
 		</ul>
 	</div>
 </nav>
 <!-- SET THE CONTROLLER AND GET ALL TODOS -->
-<store-cards></store-cards>
+<!-- <store-cards></store-cards> -->
+<div ng-view></div>
 </body>
 </html>
