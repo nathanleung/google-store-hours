@@ -10,6 +10,8 @@
 
 	<title>Store App</title>
 
+	<!--Import Google Icon Font-->
+	<link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<!-- SCROLLS -->
 	<link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
 
@@ -43,4 +45,13 @@
 <!-- <store-cards></store-cards> -->
 <div ng-view></div>
 </body>
+<script type="text/javascript">
+	$(".button-collapse").sideNav({
+			menuWidth: 250, // Default is 300
+			edge: "left", // Choose the horizontal origin
+			closeOnClick: true, // Closes side-nav on <a> clicks, useful for Angular/Meteor
+			draggable: true // Choose whether you can drag to open on touch screens
+		}
+	);
+</script>
 </html>

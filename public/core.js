@@ -46,6 +46,7 @@ storeApp.controller("StoreController", ["$scope", "$http", function($scope, $htt
 storeApp.controller("SearchController", ["$scope", "$http", "NgMap", function($scope, $http, NgMap) {
 	$scope.types = "[]";
 	// $scope.markerPosition = "43.855791, -79.335182";
+	// TODO: fix console error: InvalidValueError: setTypes: not an Array
 	$scope.placeDetail = {};
 	$scope.placeChanged = function() {
 		$scope.place = this.getPlace();

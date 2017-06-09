@@ -12,6 +12,7 @@
 		key: config.apiKey,
 		Promise: require("q").Promise
 	});
+	var Promise = require("bluebird");
 	var savedPlaceIds = ["ChIJZVVVlfLU1IkRGbZkZh5VyTw", "ChIJH_38MlvU1IkR8mDX2-VDmh0"]; // TODO: replace with database
 	// configuration =================
 
@@ -26,83 +27,43 @@
 // routes ======================================================================
 
 	// api ---------------------------------------------------------------------
-	// TODO: search for place
-	app.get("/api/searchForPlace", function(req, res) {
-		// TODO: 
-		var searchText = req.param("searchText");
-		return googleMapsClient.placesNearby({
-			keyword: searchText, // from request
-			location: [43.853145, -79.346512],
-			radius: 1000,
-			// type: "store"
-
-		})
-		.asPromise()
-		.then(function(response) {
-			var places = response.json.results;
-			// console.log(places);
-			// console.log(places[0].place_id);
-			return googleMapsClient.place({
-				placeid: places[0].place_id
-			})
-			.asPromise();
-		})
-		.then(function(response) {
-			var place = response.json.result,
-				day = (new Date()).getDay(),
-				weekday = (day) ? (day - 1) : 6,
-				openNow = (place.opening_hours.open_now) ? "Open" : "Closed",
-				hours = place.opening_hours.weekday_text[weekday];
-			console.log(place.name);
-			console.log(place.place_id);
-			console.log(openNow);
-			console.log(hours);
-			res.json([{
-				name: place.name,
-				openNow: openNow,
-				hours: hours
-			}]);
-		});
-	});
-
-	function recursiveLook(places, results, index) { // TODO: some kind of Promise.all with sys.map
-		console.log(places);
-		return googleMapsClient.place({
-			placeid: places[index]
-		}).asPromise()
-		.then(function(response) {
-			// TODO: handle no response or attributes
-			var place = response.json.result,
-				day, weekday, openNow, hours;
-			if (place) {
-				day = (new Date()).getDay();
-				weekday = (day) ? (day - 1) : 6;
-				if (place.opening_hours) {
-					openNow = (place.opening_hours.open_now) ? "Open" : "Closed";
-					hours = place.opening_hours.weekday_text[weekday];
+	app.get("/api/readSavedPlaces", function(req, res) {
+		var promises = [],
+			results = [],
+			i, j;
+		for (i = 0; i < savedPlaceIds.length; i++) {
+			promises.push(googleMapsClient.place({
+				placeid: savedPlaceIds[i]
+			}).asPromise());
+		}
+		return Promise.all(promises)
+		.then(function(responses) {
+			for (j = 0; j < responses.length; j++) {
+				// TODO: handle no response or attributes
+				var response = responses[j],
+					place = response.json.result,
+					day, weekday, openNow, hours;
+				if (place) {
+					day = (new Date()).getDay();
+					weekday = (day) ? (day - 1) : 6;
+					if (place.opening_hours) {
+						openNow = (place.opening_hours.open_now) ? "Open" : "Closed";
+						hours = place.opening_hours.weekday_text[weekday];
+					}
+					results.push({
+						name: place.name,
+						openNow: openNow,
+						hours: hours
+					});
 				}
-				results.push({
-					name: place.name,
-					openNow: openNow,
-					hours: hours
-				});
 			}
 			console.log(results);
-			index++;
-			if (!places[index]) return results;
-			return recursiveLook(places, results, index);
+			return res.json(results);
 		})
 		.then(null, function(error) {
 			console.log(error);
-			return results;
-		})
-	}
-
-	app.get("/api/readSavedPlaces", function(req, res) {
-		return recursiveLook(savedPlaceIds, [], 0)
-		.then(function(places) {
-			res.json(places);
-		})
+			return res.json(results);
+		});
 	});
 // TODO: convert to angular code/modules/controllers for search.html, button to refresh view
 	app.post("/api/savePlace", function(req, res) {
