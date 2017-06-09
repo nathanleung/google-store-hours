@@ -108,8 +108,8 @@
 	app.post("/api/savePlace", function(req, res) {
 		console.log(req.body);
 		var body = req.body; // TODO: validation
-		savedPlaceIds.push(body.placeId);
-		return;
+		if (savedPlaceIds.indexOf(body.placeId)) savedPlaceIds.push(body.placeId);
+		res.json({});
 	});
 
 	app.get("/example", function(req, res) {

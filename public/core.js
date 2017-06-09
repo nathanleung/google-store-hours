@@ -55,14 +55,14 @@ storeApp.controller("SearchController", ["$scope", "$http", "NgMap", function($s
 		$scope.markerVisible = true;
 		$scope.map.setCenter($scope.place.geometry.location);
 	}
-	$scope.savePlace = function() { // Being called more than once? response not returned?
+	$scope.savePlace = function() {
 		var place = $scope.place;
 		if (!place) return;
 		$http.post("/api/savePlace", {placeId: place.place_id})
-		.success(function(data) {
+		.then(function(data) {
 			return;
 		})
-		.error(function(data) {
+		.then(null, function(data) {
 			console.log('Error: ' + data);
 		});
 	}
