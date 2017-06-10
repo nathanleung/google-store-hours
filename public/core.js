@@ -22,9 +22,14 @@ storeApp.config(["$routeProvider", function($routeProvider) {
 		.when("/search", {
 			templateUrl : "store-search.template.html",
 			controller  : "SearchController"
+		})
+		// route for the directions
+		.when("/directions", {
+			templateUrl : "store-directions.template.html",
+			controller  : "DirectionsController"
 		});
 }]);
-storeApp.controller("StoreController", ["$scope", "$http", function($scope, $http) {
+storeApp.controller("StoreController", ["$scope", "$http", "placeService", function($scope, $http, placeService) {
 	$http.get("/api/readSavedPlaces")
 	.then(function(res) {
 		$scope.stores = res.data;
@@ -33,6 +38,7 @@ storeApp.controller("StoreController", ["$scope", "$http", function($scope, $htt
 	function(data) {
 		console.log("Error: " + data);
 	});
+	$scope.setPlace = placeService.setPlace.bind(this);
 	$scope.removePlace = function(store) {
 		$http.post("api/removePlace", {
 			id: store.id
@@ -70,8 +76,25 @@ storeApp.controller("SearchController", ["$scope", "$http", "NgMap", function($s
 	};
 	NgMap.getMap().then(function(map) {
 		$scope.map = map;
-		console.log(map.getCenter());
-		console.log('markers', map.markers);
-		console.log('shapes', map.shapes);
 	});
 }]);
+storeApp.controller("DirectionsController", ["$scope", "NgMap", "placeService", function($scope, NgMap, placeService) {
+	$scope.address = placeService.getPlace();
+	NgMap.getMap().then(function(map) {
+		$scope.map = map;
+	});
+}]);
+storeApp.factory('placeService', function() {
+	var place_address = "";
+	function setPlace(adrs) {
+		place_address = adrs;
+	}
+	function getPlace() {
+		return place_address;
+	}
+
+	return {
+		setPlace: setPlace,
+		getPlace: getPlace
+	};
+});

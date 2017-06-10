@@ -1,0 +1,11 @@
+<ng-map center="current-location" class="map" id="map">
+	<directions
+		draggable="true"
+		travel-mode="DRIVING"
+		origin="current-location"
+		panel="directions-panel"
+		destination="{{address}}">
+	</directions>
+</ng-map>
+<div id="directions-panel" class="directions-panel">
+</div>
