@@ -1,6 +1,8 @@
 <ul class="collection">
 	<li class="collection-item avatar" ng-repeat="store in stores">
 		<span class="title">{{store.name}}</span>
+		<p>{{store.address}}</p>
+		<span class="red-text">{{store.openNow}}</span>
 		<p>{{store.hours}}</p>
 	</li>
 </ul>

@@ -8,11 +8,12 @@
 	var bodyParser = require("body-parser");    // pull information from HTML POST (express4)
 	var methodOverride = require("method-override"); // simulate DELETE and PUT (express4)
 	var config = require("./config");
+	var Promise = require("bluebird");
 	var googleMapsClient = require("@google/maps").createClient({
 		key: config.apiKey,
-		Promise: require("q").Promise
+		// Promise: require("q").Promise
+		Promise: Promise
 	});
-	var Promise = require("bluebird");
 	var savedPlaceIds = ["ChIJZVVVlfLU1IkRGbZkZh5VyTw", "ChIJH_38MlvU1IkR8mDX2-VDmh0"]; // TODO: replace with database
 	// configuration =================
 
@@ -51,7 +52,9 @@
 						hours = place.opening_hours.weekday_text[weekday];
 					}
 					results.push({
+						id: place.place_id,
 						name: place.name,
+						address: place.formatted_address,
 						openNow: openNow,
 						hours: hours
 					});
@@ -62,20 +65,24 @@
 		})
 		.then(null, function(error) {
 			console.log(error);
-			return res.json(results);
+			return res.json(error);
 		});
 	});
-// TODO: convert to angular code/modules/controllers for search.html, button to refresh view
+
 	app.post("/api/savePlace", function(req, res) {
 		console.log(req.body);
 		var body = req.body; // TODO: validation
 		if (savedPlaceIds.indexOf(body.placeId)) savedPlaceIds.push(body.placeId);
-		res.json({});
+		return res.json({msg: "Good"});
 	});
 
-	app.get("/example", function(req, res) {
-		res.sendfile("./public/place_auto_complete_example.html");
-	})
+	app.post("/api/removePlace", function(req, res) {
+		var body = req.body,
+			index;
+		if ((index = savedPlaceIds.indexOf(body.id)) !== -1)
+			savedPlaceIds.splice(index, 1);
+		return res.json({msg: "Good"});
+	});
 
 	// listen (start app with node server.js) ======================================
 	app.listen(8080);
