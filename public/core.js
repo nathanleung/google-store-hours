@@ -30,7 +30,7 @@ storeApp.config(["$routeProvider", function($routeProvider) {
 		});
 }]);
 storeApp.controller("StoreController", ["$scope", "$http", "placeService", function($scope, $http, placeService) {
-	$http.get("/api/readSavedPlaces")
+	$http.get("/api/readSavedPlaces") // TODO: reload (and icon)/handle errors
 	.then(function(res) {
 		$scope.stores = res.data;
 		console.log(res.data);

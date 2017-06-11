@@ -3,7 +3,7 @@
 	// set up ========================
 	var express  = require("express");
 	var app      = express();                               // create our app w/ express
-	// var mongoose = require("mongoose");                     // mongoose for mongodb
+	var mongoose = require("mongoose");                     // mongoose for mongodb
 	// var morgan = require("morgan");             // log requests to the console (express4)
 	var bodyParser = require("body-parser");    // pull information from HTML POST (express4)
 	var methodOverride = require("method-override"); // simulate DELETE and PUT (express4)
@@ -11,13 +11,12 @@
 	var Promise = require("bluebird");
 	var googleMapsClient = require("@google/maps").createClient({
 		key: config.apiKey,
-		// Promise: require("q").Promise
 		Promise: Promise
 	});
 	var savedPlaceIds = ["ChIJZVVVlfLU1IkRGbZkZh5VyTw", "ChIJH_38MlvU1IkR8mDX2-VDmh0"]; // TODO: replace with database
 	// configuration =================
-
-	// mongoose.connect("mongodb://node:nodeuser@mongo.onmodulus.net:27017/uwO3mypu");     // connect to mongoDB database on modulus.io
+ 	mongoose.Promise = Promise;
+	mongoose.connect("mongodb://localhost/test");     // connect to mongoDB database
 
 	app.use(express.static(__dirname + "/public"));                 // set the static files location /public/img will be /img for users
 	// app.use(morgan("dev"));                                         // log every request to the console
@@ -25,63 +24,151 @@
 	app.use(bodyParser.json());                                     // parse application/json
 	app.use(bodyParser.json({ type: "application/vnd.api+json" })); // parse application/vnd.api+json as json
 	app.use(methodOverride());
+	// db connection start
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, 'connection error:'));
+	db.once('open', function() {
+		// we're connected!
+		console.log("Connected to DB");
+	});
+	var storeSchema = mongoose.Schema({
+		placeId: {type: String, index: {unique: true}},
+		name: String,
+		address: String,
+		open: [{type: Number}], // opening hours 0 index from Sunday
+		close: [{type: Number}], // closing hours 0 index form Sunday
+		weekdayText: [{type: String}], // Text of the opening-closing hours 0 index from Sunday
+		createTime: Date
+	});
+	var Store = mongoose.model('Store', storeSchema);
 // routes ======================================================================
+	function getWeekday(date) {
+		var day = (date || new Date()).getDay();
+		return (day) ? (day - 1) : 6;
+	}
+
+	function isOpen(place) {
+		var date = new Date(),
+			day = getWeekday(date),
+			openHour = place.open[day],
+			closeHour = place.close[day],
+			curTime;
+		if (place.open.length === 1 && place.open[0] === 0 && closeHour == null) return true;
+		curTime = date.getHours() * 100 + date.getMinutes();
+		return curTime > openHour && curTime < closeHour;
+	}
+
+	function fromAPI(place) {
+		var openNow, hours;
+		if (place) {
+			if (place.opening_hours) {
+				openNow = (place.opening_hours.open_now) ? "Open" : "Closed";
+				hours = place.opening_hours.weekday_text[getWeekday()];
+			}
+			return {
+				id: place.place_id,
+				name: place.name,
+				address: place.formatted_address,
+				openNow: openNow,
+				hours: hours
+			};
+		}
+	}
+
+	function fromDB(place) {
+		return {
+			id: place.placeId,
+			name: place.name,
+			address: place.address,
+			openNow: (isOpen(place)) ? "Open" : "Closed",
+			hours: place.weekdayText[getWeekday()]
+		}
+	}
+
+	function getSavedPlaces() {
+		var results = [];
+		// TODO: update db if items is older than 30 days
+		return Store.find({}).exec()
+		.then(function(stores) {
+			for (var i = 0; i < stores.length; i++) {
+				results.push(fromDB(stores[i]));
+			}
+			return results;
+		});
+	}
 
 	// api ---------------------------------------------------------------------
 	app.get("/api/readSavedPlaces", function(req, res) {
-		var promises = [],
-			results = [],
-			i, j;
-		for (i = 0; i < savedPlaceIds.length; i++) {
-			promises.push(googleMapsClient.place({
-				placeid: savedPlaceIds[i]
-			}).asPromise());
-		}
-		return Promise.all(promises)
-		.then(function(responses) {
-			for (j = 0; j < responses.length; j++) {
-				// TODO: handle no response or attributes
-				var response = responses[j],
-					place = response.json.result,
-					day, weekday, openNow, hours;
-				if (place) {
-					day = (new Date()).getDay();
-					weekday = (day) ? (day - 1) : 6;
-					if (place.opening_hours) {
-						openNow = (place.opening_hours.open_now) ? "Open" : "Closed";
-						hours = place.opening_hours.weekday_text[weekday];
-					}
-					results.push({
-						id: place.place_id,
-						name: place.name,
-						address: place.formatted_address,
-						openNow: openNow,
-						hours: hours
-					});
-				}
-			}
-			console.log(results);
+		return getSavedPlaces()
+		.then(function(results) {
 			return res.json(results);
-		})
-		.then(null, function(error) {
-			console.log(error);
-			return res.json(error);
 		});
 	});
 
+	function savePlaceDetailToDBS(placeId) {
+		return Store.findOne({placeId: placeId}, {_id: 1}).exec()
+		.then(function(store) {
+			if (store) return;
+			return googleMapsClient.place({
+				placeid: placeId
+			}).asPromise()
+			.then(function(response) {
+				var place = response.json.result,
+					weekdayText,
+					periods;
+				var store = new Store({
+					name: place.name,
+					placeId: place.place_id,
+					address: place.formatted_address,
+					open: [],
+					close: [],
+					creatTime: new Date()
+				});
+				if (place.opening_hours && (weekdayText = place.opening_hours.weekday_text)) {
+					store.weekdayText = weekdayText;
+				}
+				if (place.opening_hours && (periods = place.opening_hours.periods)) {
+					for (var i = 0; i < periods.length; i++) {
+						var period = periods[i];
+						if (period.open) {
+							store.open.push(period.open.time);
+						}
+						if (period.close) {
+							store.close.push(period.close.time);
+						}
+					}
+				}
+				store.save()
+				.then(function(doc) {
+					console.log(doc.name);
+				})
+				.then(null, function(err) {
+					console.log(err);
+				});
+			});
+		});
+	}
 	app.post("/api/savePlace", function(req, res) {
 		console.log(req.body);
 		var body = req.body; // TODO: validation
-		if (savedPlaceIds.indexOf(body.placeId)) savedPlaceIds.push(body.placeId);
-		return res.json({msg: "Good"});
+		return savePlaceDetailToDBS(body.placeId)
+		.then(function() {
+			return res.json({msg: "Good"});
+		})
 	});
 
 	app.post("/api/removePlace", function(req, res) {
 		var body = req.body,
 			index;
-		if ((index = savedPlaceIds.indexOf(body.id)) !== -1)
-			savedPlaceIds.splice(index, 1);
-		return res.json({msg: "Good"});
+		return Store.remove({
+			placeId: body.id
+		})
+		.then(function() {
+			return res.json({msg: "Good"});
+		})
+		.then(null, function(err) {
+			console.log(err);
+		});
 	});
 
 	// listen (start app with node server.js) ======================================
