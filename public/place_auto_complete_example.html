@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Place Autocomplete Address Form</title>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<script src="/js/angular.min.js"></script>
+	<script src="/js/angular-route.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDCSm68_pS6RDQ0MILKkEzPApAJsx6QEF8&libraries=places"></script>
+	<script type="text/javascript" src="js/ng-map.js"></script>
+<script>
+var testApp = angular.module("myApp", ["ngMap"]);
+testApp.controller("MyCtrl", ["NgMap", "$scope", function(NgMap, $scope) {
+	var vm = this,
+		a = $scope;
+	vm.types = "['establishment']";
+	vm.placeChanged = function() {
+		vm.place = this.getPlace();
+		a === 2;
+		console.log('location', vm.place.geometry.location);
+		vm.map.setCenter(vm.place.geometry.location);
+	}
+	NgMap.getMap().then(function(map) {
+		vm.map = map;
+	});
+ }])
+</script>
+</head>
+
+<body ng-app="myApp" ng-controller="MyCtrl as vm">
+	Auto Complete Type:
+	<select ng-model="vm.types">
+		<option value="['geocode']">Geocode</option>
+		<option value="['establishment']">Establishment</option>
+		<option value="['address']">Address</option>
+	</select><br/>
+
+	Enter an address: <br/>
+	<input places-auto-complete size=80
+		ng-model="vm.address"
+		component-restrictions="{country:'ca'}"
+		types="{{vm.types}}"
+		on-place-changed="vm.placeChanged()" /> <br/>
+	<div ng-show="vm.place">
+		Address = {{vm.place.formatted_address}} <br/>
+		Location: {{vm.place.geometry.location}}<br/>
+	</div>
+	address : {{vm.address}}
+	<ng-map></ng-map>
+</body>
+</html>

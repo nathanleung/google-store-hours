@@ -1,10 +1,25 @@
 <div class="row">
-	<div class="col s12 m6 l3" ng-repeat="store in stores">
-		<div class="card white darken-1">
+	<div class="input-field col s3">
+		<button ng-click="sortOption = 'name'; reverse = false" class="btn">
+			Title Ascending
+		</button>
+		<button ng-click="sortOption = 'name'; reverse = true" class="btn">
+			Title Descending
+		</button>
+	</div>
+	<div class="input-field col s3">
+		<select material-select ng-model="dateSelected" ng-options="date for date in dates"  ng-change="changeDate()">
+		</select>
+	</div>
+</div>
+<div class="row">
+	<div class="col s12 m6 l3" ng-repeat="store in stores | orderBy:sortOption:reverse">
+		<div class="card small white darken-1">
 			<div class="card-content black-text">
 				<span class="card-title">{{store.name}}</span>
 				<p>{{store.address}}</p>
-				<span class="red-text">{{store.openNow}}</span>
+				<span class="green-text" ng-show="store.openNow === 'Open'">{{store.openNow}}</span>
+				<span class="red-text" ng-show="store.openNow === 'Closed'">{{store.openNow}}</span>
 				<p>{{store.hours}}</p>
 			</div>
 			<div class="card-action">

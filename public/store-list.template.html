@@ -2,7 +2,8 @@
 	<li class="collection-item avatar" ng-repeat="store in stores">
 		<span class="title">{{store.name}}</span>
 		<p>{{store.address}}</p>
-		<span class="red-text">{{store.openNow}}</span>
+		<span class="green-text" ng-show="store.openNow === 'Open'">{{store.openNow}}</span>
+		<span class="red-text" ng-show="store.openNow === 'Closed'">{{store.openNow}}</span>
 		<p>{{store.hours}}</p>
 	</li>
 </ul>

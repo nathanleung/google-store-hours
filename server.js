@@ -38,18 +38,19 @@
 		open: [{type: Number}], // opening hours 0 index from Sunday
 		close: [{type: Number}], // closing hours 0 index form Sunday
 		weekdayText: [{type: String}], // Text of the opening-closing hours 0 index from Sunday
-		createTime: Date
+		createTime: Date,
+		editTime: Date
 	});
 	var Store = mongoose.model('Store', storeSchema);
 // routes ======================================================================
-	function getWeekday(date) {
-		var day = (date || new Date()).getDay();
+	function getWeekday(date, dayFilter) {
+		var day = (dayFilter >= 0) ? dayFilter : (date || new Date()).getDay();
 		return (day) ? (day - 1) : 6;
 	}
 
-	function isOpen(place) {
+	function isOpen(place, dayFilter) {
 		var date = new Date(),
-			day = getWeekday(date),
+			day = getWeekday(date, dayFilter),
 			openHour = place.open[day],
 			closeHour = place.close[day],
 			curTime;
@@ -75,31 +76,33 @@
 		}
 	}
 
-	function fromDB(place) {
+	function fromDB(place, dayFilter) {
 		return {
 			id: place.placeId,
 			name: place.name,
 			address: place.address,
-			openNow: (isOpen(place)) ? "Open" : "Closed",
-			hours: place.weekdayText[getWeekday()]
+			openNow: (isOpen(place, dayFilter)) ? "Open" : "Closed",
+			hours: place.weekdayText[getWeekday(null, dayFilter)]
 		}
 	}
 
-	function getSavedPlaces() {
+	function getSavedPlaces(dayFilter) {
 		var results = [];
 		// TODO: update db if items is older than 30 days
 		return Store.find({}).exec()
 		.then(function(stores) {
 			for (var i = 0; i < stores.length; i++) {
-				results.push(fromDB(stores[i]));
+				results.push(fromDB(stores[i], dayFilter));
 			}
 			return results;
 		});
 	}
 
 	// api ---------------------------------------------------------------------
-	app.get("/api/readSavedPlaces", function(req, res) {
-		return getSavedPlaces()
+	app.post("/api/readSavedPlaces", function(req, res) {
+		// console.log(req.params("date"));
+		var body = req.body; // TODO: validation
+		return getSavedPlaces(body.date)
 		.then(function(results) {
 			return res.json(results);
 		});
@@ -122,19 +125,21 @@
 					address: place.formatted_address,
 					open: [],
 					close: [],
-					creatTime: new Date()
+					createTime: new Date()
 				});
+				store.editTime = store.createTime;
 				if (place.opening_hours && (weekdayText = place.opening_hours.weekday_text)) {
 					store.weekdayText = weekdayText;
 				}
 				if (place.opening_hours && (periods = place.opening_hours.periods)) {
 					for (var i = 0; i < periods.length; i++) {
-						var period = periods[i];
+						var period = periods[i],
+							day = period.open && period.open.day;
 						if (period.open) {
-							store.open.push(period.open.time);
+							store.open[day] = (period.open.time);
 						}
 						if (period.close) {
-							store.close.push(period.close.time);
+							store.close[day] = (period.close.time);
 						}
 					}
 				}
